@@ -7,11 +7,16 @@ BOT_TOKEN = "8715379481:AAH3DDvgE_53hGuO3ZgMbFfk-DdXLnZt2zM"
 CHAT_ID = "7179654594"
 
 SEARCHES = [
-    "prop firm coupon",
     "prop firm discount code",
-    "free challenge prop firm",
-    "funded account giveaway",
-    "prop firm promo code"
+    "prop firm coupon code",
+    "ftmo discount code",
+    "funded account coupon",
+    "trading challenge coupon",
+    "prop firm promo code 100%",
+    "free funded account code",
+    "discount code trading firm",
+    "prop firm offer code",
+    "funded account giveaway code"
 ]
 
 # --- CODE DETECTION ---
