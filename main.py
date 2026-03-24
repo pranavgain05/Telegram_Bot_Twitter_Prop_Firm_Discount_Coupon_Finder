@@ -88,6 +88,6 @@ async def main():
                 tasks.append(scan_query(session, query))
 
             await asyncio.gather(*tasks)
-            await asyncio.sleep(15)  # fast but safe
+            await asyncio.sleep(5)  # fast but safe
 
 asyncio.run(main())
