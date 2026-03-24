@@ -1,54 +1,27 @@
 import asyncio
 import aiohttp
-import re
 from bs4 import BeautifulSoup
 
 BOT_TOKEN = "8715379481:AAH3DDvgE_53hGuO3ZgMbFfk-DdXLnZt2zM"
 CHAT_ID = "7179654594"
 
 SEARCHES = [
-    "prop firm discount code",
-    "prop firm coupon code",
-    "ftmo discount code",
-    "funded account coupon",
+    "prop firm discount",
+    "prop firm coupon",
+    "funded account giveaway",
+    "100% discount prop firm",
+    "prop firm challenge free",
     "trading challenge coupon",
-    "prop firm promo code 100%",
-    "free funded account code",
-    "discount code trading firm",
-    "prop firm offer code",
-    "funded account giveaway code"
+    "funded account code",
+    "100% discount coupon"
 ]
-
-# --- CODE DETECTION ---
-def extract_codes(text):
-    patterns = [
-        r"\b[A-Z]{4,10}[0-9]{2,4}\b",   # SAVE100, FTMO2024
-        r"\b[A-Z0-9]{6,12}\b",          # general codes
-        r"\bFREE[A-Z0-9]{2,8}\b"        # FREE codes
-    ]
-
-    blacklist = ["HTTPS", "HTTP", "WWW", "COM", "TWITTER"]
-
-    results = set()
-    text = text.upper()
-
-    for p in patterns:
-        matches = re.findall(p, text)
-        for m in matches:
-            if m not in blacklist:
-                if any(c.isdigit() for c in m):
-                    results.add(m)
-
-    return list(results)
 
 sent = set()
 
-# --- SEND TO TELEGRAM ---
 async def send(session, msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     await session.post(url, data={"chat_id": CHAT_ID, "text": msg})
 
-# --- FETCH DATA ---
 async def fetch(session, url):
     try:
         async with session.get(url, headers={"User-Agent": "Mozilla/5.0"}) as res:
@@ -56,31 +29,31 @@ async def fetch(session, url):
     except:
         return ""
 
-# --- SCAN TWITTER (via Nitter) ---
 async def scan_query(session, query):
     url = f"https://nitter.net/search?f=tweets&q={query.replace(' ', '+')}"
     html = await fetch(session, url)
 
     soup = BeautifulSoup(html, "html.parser")
-    tweets = soup.find_all("div", class_="tweet-content")
+    tweets = soup.find_all("div", class_="timeline-item")
 
     for t in tweets[:10]:
-        text = t.get_text()
-        codes = extract_codes(text)
+        text_tag = t.find("div", class_="tweet-content")
+        link_tag = t.find("a", class_="tweet-link")
 
-        if codes:
+        if text_tag and link_tag:
+            text = text_tag.get_text().strip()
+            link = "https://twitter.com" + link_tag["href"]
+
             key = text[:100]
 
             if key not in sent:
-                msg = f"💸 CODE FOUND\n\n{text[:120]}\n\nCodes: {', '.join(codes)}"
+                msg = f"🚨 NEW PROP FIRM POST\n\n{text[:200]}\n\n🔗 {link}"
                 await send(session, msg)
                 sent.add(key)
 
-# --- MAIN LOOP ---
 async def main():
     async with aiohttp.ClientSession() as session:
-        # Test message (so you know bot works)
-        await send(session, "✅ Bot is running and scanning...")
+        await send(session, "✅ Bot started - scanning posts...")
 
         while True:
             tasks = []
@@ -88,6 +61,6 @@ async def main():
                 tasks.append(scan_query(session, query))
 
             await asyncio.gather(*tasks)
-            await asyncio.sleep(5)  # fast but safe
+            await asyncio.sleep(10)
 
 asyncio.run(main())
